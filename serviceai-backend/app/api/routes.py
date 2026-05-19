@@ -11,6 +11,7 @@ from app.agents.booking_agent import create_booking, fetch_booking
 from app.agents.followup_agent import schedule_followups
 from app.agents.agentic_runner import run_agentic_loop
 from app.agents.realtime_scraper import scrape_realtime_providers, get_index, load_scraped_results
+from app.agents.location_store import set_location, get_location
 from app.database.db import (
     get_all_bookings, get_bookings_by_provider, update_booking_status,
     get_booked_slots, get_followups,
@@ -128,10 +129,28 @@ async def api_scrape_realtime(body: ScrapeRequest):
             user_lng=body.user_lng,
             max_results=min(body.max_results, 20),
         )
+        if body.user_lat is not None and body.user_lng is not None:
+            set_location(
+                lat=body.user_lat,
+                lng=body.user_lng,
+                city=result.get("detected_city", ""),
+                area=result.get("detected_area", ""),
+                state=result.get("detected_state", ""),
+                display=result.get("location_display", ""),
+            )
         return result
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/location")
+async def api_get_location():
+    """Return the most recently stored user GPS location (set on every scrape/stream call)."""
+    loc = get_location()
+    if not loc:
+        raise HTTPException(status_code=404, detail="No location stored yet")
+    return loc
 
 
 @router.get("/scrape/index")

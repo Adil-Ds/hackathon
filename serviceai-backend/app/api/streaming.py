@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
 from app.agents.agentic_runner import run_agentic_loop
+from app.agents.location_store import set_location
 
 router = APIRouter(prefix="/api")
 
@@ -34,17 +35,29 @@ async def analyze_stream(
     async def event_gen():
         queue: asyncio.Queue = asyncio.Queue()
 
+        if user_lat is not None and user_lng is not None:
+            set_location(lat=user_lat, lng=user_lng)
+
         async def on_event(event_type: str, data: dict) -> None:
             await queue.put((event_type, data))
 
         async def _run() -> None:
             try:
-                await run_agentic_loop(
+                result = await run_agentic_loop(
                     q,
                     user_lat=user_lat,
                     user_lng=user_lng,
                     on_event=on_event,
                 )
+                # Enrich stored location with resolved city/area once pipeline finishes
+                if user_lat is not None and user_lng is not None and isinstance(result, dict):
+                    intent = result.get("intent") or {}
+                    set_location(
+                        lat=user_lat,
+                        lng=user_lng,
+                        city=intent.get("city", ""),
+                        area=intent.get("area", ""),
+                    )
             except Exception as exc:
                 await queue.put(("error", {"message": str(exc)[:300]}))
             finally:

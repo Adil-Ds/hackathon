@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "service_type": "electrician",
+    "location": "Kot Khwaja Saeed, Lahore, Punjab",
+    "city": "Lahore",
+    "timestamp": "2026-05-18T14:32:50.946125",
+    "total_found": 1,
+    "source": "openstreetmap",
+    "file": "electrician_kot_khwaja_saeed__la_20260518_143250.json"
+  },
+  "providers": [
+    {
+      "name": "Rewatt Solar Energy",
+      "address": "SA Rehman Bazar Road",
+      "city": "lahore",
+      "phone": "+923236444660",
+      "website": "https://linktr.ee/rewattsolar",
+      "source_url": "https://www.openstreetmap.org/node/12023637471",
+      "rating": null,
+      "reviews_count": null,
+      "lat": 31.5868824,
+      "lng": 74.4010763,
+      "hours": "Mo-Su 09:00-21:00",
+      "category": "electrician",
+      "source": "openstreetmap",
+      "distance_km": 4.75,
+      "osm_id": 12023637471
+    }
+  ]
+}

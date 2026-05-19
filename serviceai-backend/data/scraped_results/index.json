@@ -89,6 +89,196 @@
       "timestamp": "2026-05-18T12:50:02.187827",
       "total_found": 10,
       "source": "openstreetmap"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_142201.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_142201.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:22:01.472729",
+      "total_found": 3,
+      "source": "openstreetmap"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_143250.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_143250.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:32:50.946125",
+      "total_found": 1,
+      "source": "openstreetmap"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_143314.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_143314.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:33:14.243892",
+      "total_found": 2,
+      "source": "openstreetmap"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_143344.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_143344.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:33:44.668590",
+      "total_found": 2,
+      "source": "openstreetmap"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_143357.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_143357.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:33:57.440620",
+      "total_found": 1,
+      "source": "openstreetmap"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_143523.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_143523.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:35:23.343617",
+      "total_found": 1,
+      "source": "openstreetmap"
+    },
+    {
+      "file": "painter_kot_khwaja_saeed__la_20260518_143826.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\painter_kot_khwaja_saeed__la_20260518_143826.json",
+      "service_type": "painter",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:38:26.751663",
+      "total_found": 0,
+      "source": "ddg_text"
+    },
+    {
+      "file": "painter_kot_khwaja_saeed__la_20260518_143841.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\painter_kot_khwaja_saeed__la_20260518_143841.json",
+      "service_type": "painter",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:38:41.616141",
+      "total_found": 0,
+      "source": "ddg_text"
+    },
+    {
+      "file": "painter_kot_khwaja_saeed__la_20260518_145105.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\painter_kot_khwaja_saeed__la_20260518_145105.json",
+      "service_type": "painter",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:51:05.757878",
+      "total_found": 0,
+      "source": "none"
+    },
+    {
+      "file": "plumber_kot_khwaja_saeed__la_20260518_145601.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\plumber_kot_khwaja_saeed__la_20260518_145601.json",
+      "service_type": "plumber",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T14:56:01.932305",
+      "total_found": 0,
+      "source": "none"
+    },
+    {
+      "file": "doctor_kot_khwaja_saeed__la_20260518_150251.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\doctor_kot_khwaja_saeed__la_20260518_150251.json",
+      "service_type": "doctor",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T15:02:51.301855",
+      "total_found": 0,
+      "source": "none"
+    },
+    {
+      "file": "doctor_kot_khwaja_saeed__la_20260518_150300.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\doctor_kot_khwaja_saeed__la_20260518_150300.json",
+      "service_type": "doctor",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T15:03:00.192795",
+      "total_found": 0,
+      "source": "none"
+    },
+    {
+      "file": "doctor_kot_khwaja_saeed__la_20260518_150549.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\doctor_kot_khwaja_saeed__la_20260518_150549.json",
+      "service_type": "doctor",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T15:05:49.394983",
+      "total_found": 0,
+      "source": "none"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_150705.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_150705.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T15:07:05.972814",
+      "total_found": 0,
+      "source": "none"
+    },
+    {
+      "file": "electrician_kot_khwaja_saeed__la_20260518_151635.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\electrician_kot_khwaja_saeed__la_20260518_151635.json",
+      "service_type": "electrician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-18T15:16:35.616165",
+      "total_found": 0,
+      "source": "google_search"
+    },
+    {
+      "file": "ac_technician_kot_khwaja_saeed__la_20260519_134559.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\ac_technician_kot_khwaja_saeed__la_20260519_134559.json",
+      "service_type": "AC technician",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-19T13:45:59.166355",
+      "total_found": 10,
+      "source": "google_search"
+    },
+    {
+      "file": "doctor_kot_khwaja_saeed__la_20260519_134623.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\doctor_kot_khwaja_saeed__la_20260519_134623.json",
+      "service_type": "doctor",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-19T13:46:23.087887",
+      "total_found": 10,
+      "source": "google_search"
+    },
+    {
+      "file": "doctor_kot_khwaja_saeed__la_20260519_141047.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\doctor_kot_khwaja_saeed__la_20260519_141047.json",
+      "service_type": "doctor",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-19T14:10:47.328284",
+      "total_found": 10,
+      "source": "google_search"
+    },
+    {
+      "file": "doctor_kot_khwaja_saeed__la_20260519_141428.json",
+      "path": "C:\\Users\\Lenovo\\Desktop\\hacakathon\\serviceai-backend\\data\\scraped_results\\doctor_kot_khwaja_saeed__la_20260519_141428.json",
+      "service_type": "doctor",
+      "location": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Lahore",
+      "timestamp": "2026-05-19T14:14:28.858391",
+      "total_found": 10,
+      "source": "google_search"
     }
   ]
 }

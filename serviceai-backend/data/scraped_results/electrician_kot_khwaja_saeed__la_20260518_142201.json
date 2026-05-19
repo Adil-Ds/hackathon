@@ -1,0 +1,64 @@
+{
+  "metadata": {
+    "service_type": "electrician",
+    "location": "Kot Khwaja Saeed, Lahore, Punjab",
+    "city": "Lahore",
+    "timestamp": "2026-05-18T14:22:01.472729",
+    "total_found": 3,
+    "source": "openstreetmap",
+    "file": "electrician_kot_khwaja_saeed__la_20260518_142201.json"
+  },
+  "providers": [
+    {
+      "name": "Rewatt Solar Energy",
+      "address": "SA Rehman Bazar Road",
+      "city": "lahore",
+      "phone": "+923236444660",
+      "website": "https://linktr.ee/rewattsolar",
+      "source_url": "https://www.openstreetmap.org/node/12023637471",
+      "rating": null,
+      "reviews_count": null,
+      "lat": 31.5868824,
+      "lng": 74.4010763,
+      "hours": "Mo-Su 09:00-21:00",
+      "category": "electrician",
+      "source": "openstreetmap",
+      "distance_km": 4.75,
+      "osm_id": 12023637471
+    },
+    {
+      "name": "Mehran Experts Professional Maintenance Services ... - Facebook",
+      "address": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Kot Khwaja Saeed, Lahore, Punjab",
+      "phone": "+923331488858",
+      "website": "https://www.facebook.com/groups/1055987834438490/posts/6865245390179343/",
+      "source_url": "https://www.facebook.com/groups/1055987834438490/posts/6865245390179343/",
+      "description": "https://wa.me/c/923000888121 Location Lahore, Punjab ... phone number +923331488858. Umar Yunus and 6 ... Mehran Experts Maintenance and Construction Services ...",
+      "rating": null,
+      "reviews_count": null,
+      "lat": null,
+      "lng": null,
+      "hours": null,
+      "category": "electrician",
+      "source": "ddg_text",
+      "distance_km": null
+    },
+    {
+      "name": "Lahore Business Directory Contacts | PDF - Scribd",
+      "address": "Kot Khwaja Saeed, Lahore, Punjab",
+      "city": "Kot Khwaja Saeed, Lahore, Punjab",
+      "phone": "0301-5288597",
+      "website": "https://www.scribd.com/document/790755069/WCCI-Lahore-Company-List",
+      "source_url": "https://www.scribd.com/document/790755069/WCCI-Lahore-Company-List",
+      "description": "Rating 5.0(1)V, LAHORE OFFICE NO. 21, STREET NO. MISS HAFIZA ZAINAB NAS1R • BABA BOHLA 28 0301-5288597 217 10824 A ARAIN ENTERPRISES Proprietor MOHALLAH KOT KHAWAJA SAEED, ...",
+      "rating": null,
+      "reviews_count": null,
+      "lat": null,
+      "lng": null,
+      "hours": null,
+      "category": "electrician",
+      "source": "ddg_text",
+      "distance_km": null
+    }
+  ]
+}

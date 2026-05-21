@@ -11,7 +11,7 @@ const LAN_IP = "10.179.181.217";  // ✅ matches your current network
 // Leave empty ("") to use LAN IP.
 
 // Paste your deployed Railway production URL here (e.g. "https://serviceai-backend-production.up.railway.app")
-const RAILWAY_URL = "";
+const RAILWAY_URL = "https://booknfix-production.up.railway.app";
 
 const NGROK_URL = "";
 

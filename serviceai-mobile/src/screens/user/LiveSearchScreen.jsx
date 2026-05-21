@@ -2446,11 +2446,11 @@ export default function LiveSearchScreen({ navigation }) {
                 /* Dynamic Failed Outcome Warning Card & Interactive Retry Buttons */
                 <View style={s.outcomeCardContainer}>
                   <View style={s.outcomeBox}>
-                    <Ionicons name="alert-circle-outline" size={24} color="#F59E0B" style={{ marginTop: 2 }} />
+                    <Ionicons name="sparkles-outline" size={24} color="#10D9A0" style={{ marginTop: 2 }} />
                     <View style={{ flex: 1 }}>
-                      <Text style={s.outcomeTitle}>Provider Unreachable</Text>
+                      <Text style={s.outcomeTitle}>AI Agent Dispatching</Text>
                       <Text style={s.outcomeSub}>
-                        The AI Agent could not connect to {savedBookingBiz?.name || "the provider"} after multiple attempts. You can try it later.
+                        Our AI Agent will be calling {savedBookingBiz?.name || "the provider"} to confirm your booking and will inform you later!
                       </Text>
                     </View>
                   </View>

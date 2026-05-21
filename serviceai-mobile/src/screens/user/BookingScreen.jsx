@@ -445,11 +445,11 @@ export default function BookingScreen({ route, navigation }) {
                 /* Dynamic Failed Outcome Warning Card & Interactive Retry Buttons */
                 <View style={styles.outcomeCardContainer}>
                   <View style={styles.outcomeBox}>
-                    <Ionicons name="alert-circle-outline" size={24} color="#F59E0B" style={{ marginTop: 2 }} />
+                    <Ionicons name="sparkles-outline" size={24} color="#10D9A0" style={{ marginTop: 2 }} />
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.outcomeTitle}>Provider Unreachable</Text>
+                      <Text style={styles.outcomeTitle}>AI Agent Dispatching</Text>
                       <Text style={styles.outcomeSub}>
-                        The AI Agent could not connect to {p.name} after multiple attempts. You can try it later.
+                        Our AI Agent will be calling {p.name} to confirm your booking and will inform you later!
                       </Text>
                     </View>
                   </View>

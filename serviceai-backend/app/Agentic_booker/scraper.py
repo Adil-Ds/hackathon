@@ -108,6 +108,29 @@ def get_chrome_major_version() -> int:
     return None
 
 def make_driver(headless: bool = False) -> uc.Chrome:
+    # On Railway / Docker containers, directly use standard Selenium with evasion parameters
+    # to avoid undetected-chromedriver's localhost binding/debugging port errors.
+    if os.path.exists("/app/data") or os.environ.get("PORT") or os.environ.get("RAILWAY_STATIC_URL"):
+        print("[scraper] Container/Cloud environment detected. Directing to standard Selenium Chrome driver with evasion...")
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options
+        co = Options()
+        co.add_argument('--headless=new')
+        co.add_argument('--no-sandbox')
+        co.add_argument('--disable-dev-shm-usage')
+        co.add_argument('--disable-gpu')
+        co.add_argument('--lang=en-US')
+        co.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+        co.add_argument('--disable-blink-features=AutomationControlled')
+        co.add_experimental_option("excludeSwitches", ["enable-automation"])
+        co.add_experimental_option('useAutomationExtension', False)
+        driver = webdriver.Chrome(options=co)
+        # Hide navigator.webdriver completely
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        })
+        return driver
+
     opts = uc.ChromeOptions()
     opts.add_argument('--lang=en-US')
     opts.add_argument('--no-first-run')
@@ -117,7 +140,6 @@ def make_driver(headless: bool = False) -> uc.Chrome:
     opts.add_argument('--no-sandbox')
     opts.add_argument('--disable-dev-shm-usage')
     opts.add_argument('--disable-gpu')
-    # Opened visibly as requested so you can monitor progress.
     if headless:
         opts.add_argument('--headless=new')
     
@@ -130,25 +152,43 @@ def make_driver(headless: bool = False) -> uc.Chrome:
         try:
             return uc.Chrome(options=opts, use_subprocess=False)
         except Exception as e2:
-            print(f"[scraper] uc.Chrome fallback failed: {e2}. Attempting simple selenium chrome driver...")
+            print(f"[scraper] uc.Chrome fallback failed: {e2}. Attempting simple selenium chrome driver with evasion...")
             from selenium import webdriver
             from selenium.webdriver.chrome.options import Options
             co = Options()
-            co.add_argument('--headless')
+            co.add_argument('--headless=new')
             co.add_argument('--no-sandbox')
             co.add_argument('--disable-dev-shm-usage')
             co.add_argument('--disable-gpu')
-            return webdriver.Chrome(options=co)
+            co.add_argument('--lang=en-US')
+            co.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36')
+            co.add_argument('--disable-blink-features=AutomationControlled')
+            co.add_experimental_option("excludeSwitches", ["enable-automation"])
+            co.add_experimental_option('useAutomationExtension', False)
+            driver = webdriver.Chrome(options=co)
+            # Evade navigator.webdriver detection
+            driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            })
+            return driver
 
 
 def dismiss_consent(driver):
-    for label in ('Accept all', 'I agree', 'Accept'):
+    # Dynamic, language-independent and ID-based consent XPaths
+    xpaths = [
+        '//button[@id="L2AGLb"]', # Google's direct Accept All button ID in Europe
+        '//button[normalize-space()="Accept all"]',
+        '//button[normalize-space()="I agree"]',
+        '//button[normalize-space()="Accept"]',
+        '//button[contains(@aria-label,"Accept all")]',
+        '//form[@action="https://consent.google.com/save"]//button',
+    ]
+    for xpath in xpaths:
         try:
-            btn = driver.find_element(
-                By.XPATH, f'//button[normalize-space()="{label}"]'
-            )
+            btn = driver.find_element(By.XPATH, xpath)
             btn.click()
-            pause(0.8, 1.5)
+            pause(1.0, 2.0)
+            print(f"    [scraper] Consent dismissed using: {xpath}")
             return
         except Exception:
             pass
@@ -179,11 +219,25 @@ def get_business_card_elements(driver) -> list:
         'div.uMdZh',
         'div.cXedhc',
     ]
+    # Wait for at least one card selector to become present (up to 8 seconds)
+    print("    [cards] Waiting for cards to render...")
+    start_time = time.time()
+    while time.time() - start_time < 8:
+        for sel in selectors:
+            try:
+                cards = driver.find_elements(By.CSS_SELECTOR, sel)
+                if len(cards) >= 2:
+                    print(f'    [cards] selector "{sel}" -> {len(cards)} cards')
+                    return cards
+            except Exception:
+                pass
+        time.sleep(0.5)
+    
+    # Try one last immediate check without wait
     for sel in selectors:
         try:
             cards = driver.find_elements(By.CSS_SELECTOR, sel)
-            if len(cards) >= 2:
-                print(f'    [cards] selector "{sel}" -> {len(cards)} cards')
+            if len(cards) >= 1:
                 return cards
         except Exception:
             pass
@@ -898,6 +952,16 @@ def scrape(service: str, location: str,
     businesses = []
 
     try:
+        # Pre-set Google consent cookies to completely bypass consent walls globally
+        try:
+            driver.get("https://www.google.com")
+            time.sleep(1.0)
+            driver.add_cookie({"name": "CONSENT", "value": "YES+cb.20220215-08-p0.en+FX+555", "domain": ".google.com"})
+            driver.add_cookie({"name": "SOCS", "value": "OTI2OTI5NTM5", "domain": ".google.com"})
+            print("    [scraper] Google consent cookies injected successfully.")
+        except Exception as ce:
+            print(f"    [scraper] Consent cookie injection skipped: {ce}")
+
         google_search(driver, query)
 
         cards = get_business_card_elements(driver)

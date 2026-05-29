@@ -109,8 +109,8 @@ class FindBusinessRequest(BaseModel):
 class ScoredBusiness(BaseModel):
     rank: int
     name: Optional[str] = None
-    rating: Optional[str] = None
-    review_count: Optional[str] = None
+    rating: Optional[Union[str, float]] = None
+    review_count: Optional[Union[str, int]] = None
     address: Optional[str] = None
     phone: Optional[str] = None
     website: Optional[str] = None

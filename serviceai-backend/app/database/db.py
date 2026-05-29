@@ -2,7 +2,8 @@ import sqlite3
 import os
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "../../data/bookings.db")
+# Use persistent Railway volume in production if available, else fallback to local relative path
+DB_PATH = "/app/data/call_logs.db" if os.path.exists("/app/data") else os.path.join(os.path.dirname(__file__), "../../data/bookings.db")
 
 
 def get_connection():

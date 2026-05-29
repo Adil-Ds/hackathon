@@ -18,9 +18,12 @@
       }
     },
     "plugins": [
-      ["expo-location", {
-        "locationAlwaysAndWhenInUsePermission": "ServiceAI uses your location to find nearby service providers."
-      }]
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "ServiceAI uses your location to find nearby service providers."
+        }
+      ]
     ],
     "android": {
       "adaptiveIcon": {
@@ -36,11 +39,17 @@
         "googleMaps": {
           "apiKey": "AIzaSyD-placeholder-replace-with-real-key"
         }
-      }
+      },
+      "package": "com.bookNfix"
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4bdbc5fe-53f0-4b3a-8716-8f9c6f210f3c"
+      }
     }
   }
 }

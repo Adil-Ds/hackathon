@@ -501,7 +501,8 @@ def run_pipeline(
         report_path = txt_path.replace(".txt", "_report.txt")
     else:
         os.makedirs(out_dir, exist_ok=True)
-        report_path = os.path.join(out_dir, f"{re.sub(r'\\W+', '_', svc).lower()}_report.txt")
+        svc_slug = re.sub(r'\W+', '_', svc).lower()
+        report_path = os.path.join(out_dir, f"{svc_slug}_report.txt")
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)

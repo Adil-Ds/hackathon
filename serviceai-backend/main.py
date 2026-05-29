@@ -28,6 +28,7 @@ app.include_router(streaming_router)
 app.include_router(caller_router)
 
 
+
 @app.on_event("startup")  # noqa: deprecated in FastAPI 0.95+ but still works
 async def startup():
     init_db()

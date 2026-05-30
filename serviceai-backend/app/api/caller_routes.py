@@ -160,6 +160,36 @@ async def initiate_call(body: InitiateCallRequest):
             update_call_log(log_id, booking_id=booking_id)
         except Exception as be:
             print(f"[INITIATE] ⚠️  Pending booking create failed: {be}")
+    elif outcome == "NO_ANSWER":
+        try:
+            booking_id = _create_pending_booking(body, body.preferred_time or "TBD", log_id)
+            update_call_log(log_id, booking_id=booking_id)
+            print(f"[INITIATE] 📵  NO_ANSWER — created PENDING booking → ID={booking_id}")
+        except Exception as be:
+            print(f"[INITIATE] ⚠️  NO_ANSWER booking create failed: {be}")
+    elif outcome == "REJECTED":
+        try:
+            booking_id = f"BK-{uuid.uuid4().hex[:6].upper()}"
+            insert_booking({
+                "booking_id":       booking_id,
+                "provider_id":      body.provider_phone,
+                "provider_name":    body.provider_name,
+                "service":          body.service_type or "Service",
+                "user_id":          body.user_id,
+                "user_name":        body.user_name,
+                "user_location":    None,
+                "location_address": body.user_address or "",
+                "date":             datetime.now(timezone.utc).date().isoformat(),
+                "time_slot":        f"rejected_{log_id}",
+                "price_agreed":     0,
+                "status":           "CANCELLED",
+                "phone":            body.provider_phone,
+                "created_at":       datetime.now(timezone.utc).isoformat(),
+            })
+            update_call_log(log_id, booking_id=booking_id)
+            print(f"[INITIATE] ❌  REJECTED — created CANCELLED booking → ID={booking_id}")
+        except Exception as be:
+            print(f"[INITIATE] ⚠️  REJECTED booking create failed: {be}")
 
     return CallConclusion(
         call_log_id=log_id,
@@ -443,6 +473,36 @@ async def _run_inquiry_bg(log_id: int, body: InitiateCallRequest):
                 print(f"[BG #{log_id}] ⏳  Booking PENDING (provider suggested {suggested}) → ID={booking_id}\n")
             except Exception as be:
                 print(f"[BG #{log_id}] ⚠️   Pending booking insert failed: {be}\n")
+        elif outcome == "NO_ANSWER":
+            try:
+                booking_id = _create_pending_booking(body, body.preferred_time or "TBD", log_id)
+                update_call_log(log_id, booking_id=booking_id)
+                print(f"[BG #{log_id}] 📵  NO_ANSWER — PENDING booking → ID={booking_id}\n")
+            except Exception as be:
+                print(f"[BG #{log_id}] ⚠️   NO_ANSWER booking insert failed: {be}\n")
+        elif outcome == "REJECTED":
+            try:
+                booking_id = f"BK-{uuid.uuid4().hex[:6].upper()}"
+                insert_booking({
+                    "booking_id":       booking_id,
+                    "provider_id":      body.provider_phone,
+                    "provider_name":    body.provider_name,
+                    "service":          body.service_type or "Service",
+                    "user_id":          body.user_id,
+                    "user_name":        body.user_name,
+                    "user_location":    None,
+                    "location_address": body.user_address or "",
+                    "date":             datetime.now(timezone.utc).date().isoformat(),
+                    "time_slot":        f"rejected_{log_id}",
+                    "price_agreed":     0,
+                    "status":           "CANCELLED",
+                    "phone":            body.provider_phone,
+                    "created_at":       datetime.now(timezone.utc).isoformat(),
+                })
+                update_call_log(log_id, booking_id=booking_id)
+                print(f"[BG #{log_id}] ❌  REJECTED — CANCELLED booking → ID={booking_id}\n")
+            except Exception as be:
+                print(f"[BG #{log_id}] ⚠️   REJECTED booking insert failed: {be}\n")
         else:
             print(f"[BG #{log_id}] ℹ️   No booking created (outcome={outcome})\n")
 

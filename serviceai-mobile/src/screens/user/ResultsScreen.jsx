@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+﻿import React, { useRef, useEffect, useState } from "react";
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Animated,
   Pressable, Linking,
@@ -610,7 +610,7 @@ export default function ResultsScreen({ route, navigation }) {
   const totalFound = businesses.length;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
         <Animated.View style={[styles.header, { opacity: headerAnim }]}>

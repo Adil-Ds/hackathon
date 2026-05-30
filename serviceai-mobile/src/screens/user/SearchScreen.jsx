@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+﻿import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Animated, KeyboardAvoidingView, Platform,
@@ -51,7 +51,7 @@ export default function SearchScreen({ navigation, route }) {
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={["bottom"]}>
         <TopBar
           title="Ask anything"
           subtitle="AI agents will find it"

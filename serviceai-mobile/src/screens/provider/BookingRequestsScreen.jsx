@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿import React, { useEffect, useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, FlatList,
   TouchableOpacity, RefreshControl, Alert,
@@ -55,7 +55,7 @@ function RequestCard({ booking, onAccept, onDecline }) {
 }
 
 export default function BookingRequestsScreen() {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -64,17 +64,17 @@ export default function BookingRequestsScreen() {
   const linkedProviderId = userProfile?.linkedProviderId || null;
 
   const fetchData = useCallback(async () => {
+    const lookupId = linkedProviderId || user?.uid;
+    if (!lookupId) { setLoading(false); setRefreshing(false); return; }
     try {
-      const data = linkedProviderId
-        ? await API.getProviderBookings(linkedProviderId)
-        : await API.getAllBookings();
+      const data = await API.getProviderBookings(lookupId);
       setBookings(data);
     } catch (_) {}
     finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [linkedProviderId]);
+  }, [linkedProviderId, user?.uid]);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -103,7 +103,7 @@ export default function BookingRequestsScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <View style={styles.header}>
         <Text style={styles.title}>Booking Requests</Text>
         <Text style={styles.subtitle}>{bookings.length} total · {pendingCount} need action</Text>

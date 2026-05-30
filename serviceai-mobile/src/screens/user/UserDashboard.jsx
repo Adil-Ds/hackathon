@@ -242,6 +242,13 @@ export default function UserDashboard({ navigation }) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Realtime refresh: re-fetch when backend sends booking_update via WebSocket
+  useEffect(() => {
+    const { wsManager } = require("../../services/websocket");
+    const unsub = wsManager.on("__booking_refresh", () => fetchData());
+    return () => unsub();
+  }, [fetchData]);
+
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   // date helper for the square calendar icon
@@ -294,7 +301,7 @@ export default function UserDashboard({ navigation }) {
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }} end={{ x: 0.5, y: 0.5 }}
       />
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={["bottom"]}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
@@ -387,6 +394,34 @@ export default function UserDashboard({ navigation }) {
                   <Text style={styles.bentoLabel}>Today's list</Text>
                 </View>
               </View>
+            </View>
+          </SpringIn>
+
+          {/* Browse Providers quick action */}
+          <SpringIn delay={150}>
+            <View style={[styles.px, { marginBottom: 8 }]}>
+              <TouchableOpacity
+                onPress={() => {
+                  // navigate to BrowseTab sibling via parent tab navigator
+                  try { navigation.getParent()?.navigate("BrowseTab"); } catch(_) { navigation.navigate("BrowseTab"); }
+                }}
+                activeOpacity={0.85}
+                style={{
+                  flexDirection: "row", alignItems: "center", gap: 12,
+                  backgroundColor: COLORS.card, borderRadius: 14,
+                  borderWidth: 1, borderColor: COLORS.border,
+                  padding: 14,
+                }}
+              >
+                <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: COLORS.violet + "20", alignItems: "center", justifyContent: "center" }}>
+                  <Ionicons name="compass-outline" size={20} color={COLORS.violet} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: "800", color: COLORS.text }}>Browse Providers</Text>
+                  <Text style={{ fontSize: 12, color: COLORS.textMuted }}>Search, filter & discover top-rated services</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+              </TouchableOpacity>
             </View>
           </SpringIn>
 

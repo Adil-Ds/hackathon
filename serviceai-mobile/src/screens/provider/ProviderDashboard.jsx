@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+﻿import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, RefreshControl, ActivityIndicator, Animated,
@@ -65,10 +65,11 @@ function BookingRow({ booking, onAccept, onDecline }) {
 }
 
 export default function ProviderDashboard({ navigation }) {
-  const { userProfile, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [providerRating, setProviderRating] = useState(null);
   const headerAnim = useRef(new Animated.Value(0)).current;
 
   const providerCategory = userProfile?.category || "Service Provider";
@@ -76,25 +77,44 @@ export default function ProviderDashboard({ navigation }) {
   const linkedProviderId = userProfile?.linkedProviderId || null;
   const pendingCount = bookings.filter((b) => b.status === "PENDING").length;
   const confirmedCount = bookings.filter((b) => b.status === "CONFIRMED").length;
+  const totalEarnings = bookings
+    .filter((b) => ["CONFIRMED", "IN_PROGRESS", "COMPLETED"].includes(b.status))
+    .reduce((sum, b) => sum + (b.price_agreed || 0), 0);
 
   useEffect(() => {
     Animated.timing(headerAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   }, []);
 
   const fetchBookings = useCallback(async () => {
+    const lookupId = linkedProviderId || user?.uid;
+    if (!lookupId) { setLoading(false); setRefreshing(false); return; }
     try {
-      const data = linkedProviderId
-        ? await API.getProviderBookings(linkedProviderId)
-        : await API.getAllBookings();
+      const data = await API.getProviderBookings(lookupId);
       setBookings(data);
     } catch (_) {}
     finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [linkedProviderId]);
+  }, [linkedProviderId, user?.uid]);
 
   useEffect(() => { fetchBookings(); }, []);
+
+  // Realtime: re-fetch on WebSocket booking_update event
+  useEffect(() => {
+    const { wsManager } = require("../../services/websocket");
+    const unsub = wsManager.on("__booking_refresh", () => fetchBookings());
+    return () => unsub();
+  }, [fetchBookings]);
+
+  // Fetch real provider rating from the provider profile
+  useEffect(() => {
+    if (!linkedProviderId) return;
+    API.getProviders().then((providers) => {
+      const match = providers.find((p) => p.id === linkedProviderId);
+      if (match?.rating != null) setProviderRating(match.rating);
+    }).catch(() => {});
+  }, [linkedProviderId]);
 
   const handleAccept = async (bookingId) => {
     try {
@@ -113,7 +133,7 @@ export default function ProviderDashboard({ navigation }) {
   const recentBookings = bookings.slice(0, 6);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <ScrollView
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
@@ -142,8 +162,8 @@ export default function ProviderDashboard({ navigation }) {
         {/* Earnings card */}
         <LinearGradient colors={["#1C1409", "#130F05"]} style={styles.earningsCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
           <View style={styles.earningsGlow} />
-          <Text style={styles.earningsLabel}>Total Earnings (Simulated)</Text>
-          <Text style={styles.earningsValue}>₨{(confirmedCount * 2000).toLocaleString()}</Text>
+          <Text style={styles.earningsLabel}>Total Earnings</Text>
+          <Text style={styles.earningsValue}>₨{totalEarnings.toLocaleString()}</Text>
           <View style={styles.earningsRow}>
             {[
               { value: bookings.length, label: "Total", color: COLORS.text },
@@ -179,7 +199,7 @@ export default function ProviderDashboard({ navigation }) {
 
         {/* Stats */}
         <View style={styles.statsRow}>
-          <StatCard icon="star" value="4.8" label="Rating" color={COLORS.warning} />
+          <StatCard icon="star" value={providerRating != null ? providerRating.toFixed(1) : "—"} label="Rating" color={COLORS.warning} />
           <StatCard icon="receipt-outline" value={bookings.length} label="All Jobs" color={COLORS.primary} />
           <StatCard icon="checkmark-circle-outline" value={confirmedCount} label="Completed" color={COLORS.success} />
         </View>

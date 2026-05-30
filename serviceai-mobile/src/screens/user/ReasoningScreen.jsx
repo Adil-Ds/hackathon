@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, StyleSheet, Animated, TouchableOpacity,
 } from "react-native";
@@ -231,7 +231,7 @@ export default function ReasoningScreen({ navigation, route }) {
         style={StyleSheet.absoluteFill}
         start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.5 }}
       />
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["bottom"]}>
 
         {/* Back button */}
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

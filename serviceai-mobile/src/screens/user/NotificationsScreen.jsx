@@ -1,332 +1,227 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿/**
+ * Realtime Notifications Screen
+ * Merges v1 booking-derived notifications (SQLite) with v2 server notifications (PG).
+ * Live updates arrive via WebSocket → notificationStore.
+ */
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator,
+  FlatList, RefreshControl, StyleSheet, Text,
+  TouchableOpacity, View, Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { API } from "../../services/api";
+import { ChatAPI } from "../../services/chatApi";
+import { useNotificationStore } from "../../stores/notificationStore";
 import { COLORS, FONTS, RADIUS } from "../../constants/theme";
 
-const STATUS_META = {
-  PENDING:   { icon: "time-outline",            color: COLORS.warning,  label: "Booking Pending" },
-  CONFIRMED: { icon: "checkmark-circle-outline", color: COLORS.success,  label: "Booking Confirmed" },
-  CANCELLED: { icon: "close-circle-outline",     color: COLORS.danger,   label: "Booking Cancelled" },
-  REMINDER:  { icon: "alarm-outline",            color: COLORS.primary,  label: "Upcoming Reminder" },
-  DEFAULT:   { icon: "receipt-outline",          color: COLORS.info,     label: "Booking Update" },
+// ── Notification type meta ────────────────────────────────────────────────────
+const N_META = {
+  BOOKING_CREATED:   { icon: "add-circle-outline",    color: COLORS.primary,  label: "New Booking" },
+  BOOKING_CONFIRMED: { icon: "checkmark-circle",       color: COLORS.success,  label: "Confirmed" },
+  BOOKING_CANCELLED: { icon: "close-circle-outline",   color: COLORS.danger,   label: "Cancelled" },
+  NEW_MESSAGE:       { icon: "chatbubble-outline",     color: COLORS.violet,   label: "Message" },
+  CALL_INCOMING:     { icon: "call-outline",           color: COLORS.warning,  label: "Call" },
+  REVIEW_RECEIVED:   { icon: "star-outline",           color: COLORS.warning,  label: "Review" },
+  SYSTEM:            { icon: "information-circle-outline", color: COLORS.info, label: "System" },
+  // v1 legacy
+  PENDING:           { icon: "time-outline",            color: COLORS.warning,  label: "Pending" },
+  CONFIRMED:         { icon: "checkmark-circle-outline",color: COLORS.success,  label: "Confirmed" },
+  CANCELLED:         { icon: "close-circle-outline",   color: COLORS.danger,   label: "Cancelled" },
+  REMINDER:          { icon: "alarm-outline",           color: COLORS.primary,  label: "Reminder" },
+  DEFAULT:           { icon: "receipt-outline",         color: COLORS.info,     label: "Update" },
 };
 
-const LAST_READ_KEY = "serviceai_last_read_notifications";
-
-// Robust Date & Time parsing helpers to evaluate 1-hour service arrival thresholds
-function getBookingDateTime(dateStr, timeStr) {
-  if (!dateStr) return null;
-  
-  let targetDate = new Date();
-  const lowerDate = dateStr.toLowerCase();
-  
-  if (lowerDate.includes("tomorrow")) {
-    targetDate.setDate(targetDate.getDate() + 1);
-  } else if (lowerDate.includes("today")) {
-    // Keep current date
-  } else {
-    const parsed = new Date(dateStr);
-    if (!isNaN(parsed.getTime())) {
-      targetDate = parsed;
-    }
-  }
-  
-  if (timeStr) {
-    if (timeStr.startsWith("pending_")) {
-      return null; // Still in negotiation
-    }
-    const cleanTime = timeStr.split("–")[0]?.trim().split("-")[0]?.trim(); // e.g. "07:00 AM" or "7:00 AM"
-    const match = cleanTime.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-    if (match) {
-      let hours = parseInt(match[1], 10);
-      const minutes = parseInt(match[2], 10);
-      const ampm = match[3]?.toUpperCase();
-      
-      if (ampm === "PM" && hours < 12) hours += 12;
-      if (ampm === "AM" && hours === 12) hours = 0;
-      
-      targetDate.setHours(hours, minutes, 0, 0);
-    }
-  }
-  
-  return targetDate;
+function getMeta(type) {
+  return N_META[type] || N_META.DEFAULT;
 }
 
-function getMinutesUntilBooking(dateStr, timeStr) {
-  const target = getBookingDateTime(dateStr, timeStr);
-  if (!target) return null;
-  
-  const diffMs = target.getTime() - Date.now();
-  const diffMins = diffMs / (1000 * 60);
-  return diffMins;
+function timeAgo(iso) {
+  if (!iso) return "";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000)      return "Just now";
+  if (ms < 3_600_000)   return `${Math.floor(ms / 60_000)}m ago`;
+  if (ms < 86_400_000)  return `${Math.floor(ms / 3_600_000)}h ago`;
+  return new Date(iso).toLocaleDateString();
 }
 
-function NotifCard({ booking, isUnread }) {
-  const meta = STATUS_META[booking.status] || STATUS_META.DEFAULT;
-  
-  // Fix double booking prefix
-  const displayId = (() => {
-    const rawId = booking.booking_id || booking.id || "";
-    if (!rawId) return "—";
-    const str = String(rawId).toUpperCase();
-    if (str.startsWith("BK-")) return str;
-    return `BK-${str}`;
-  })();
+// ── Build v1 booking notifications ───────────────────────────────────────────
+function buildV1Notifications(bookings) {
+  return bookings.map((b) => ({
+    id: `v1_${b.id || b.booking_id}`,
+    type: b.status || "DEFAULT",
+    title: `${b.service || "Service"} — ${b.status || "Update"}`,
+    body: `Provider: ${b.provider_name}`,
+    is_read: true,
+    created_at: b.created_at,
+    _source: "v1",
+  }));
+}
 
-  // Render a special, glowing status card if this is a time-scheduled service reminder
-  if (booking.status === "REMINDER") {
-    return (
-      <View style={[
-        styles.card,
-        {
-          borderColor: COLORS.primary,
-          backgroundColor: "rgba(108, 99, 255, 0.07)",
-          borderWidth: 1.5
-        }
-      ]}>
-        <View style={[styles.unreadMarker, { backgroundColor: COLORS.primary }]} />
-        <View style={[styles.iconBox, { backgroundColor: COLORS.primary + "18" }]}>
-          <Ionicons name="alarm-outline" size={20} color={COLORS.primary} />
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <Text style={[styles.title, { color: COLORS.primary }]}>Upcoming Service Reminder</Text>
-            <View style={[styles.newBadge, { backgroundColor: COLORS.primary + "22" }]}>
-              <Text style={[styles.newBadgeText, { color: COLORS.primary }]}>SOON</Text>
-            </View>
-          </View>
-          <Text style={[styles.body, { color: COLORS.text, fontWeight: "600" }]} numberOfLines={3}>
-            Your {booking.service} dispatch with {booking.provider_name} is scheduled to arrive in {booking.minutes_left} minutes (at {booking.time_slot?.split("–")[0]?.trim()}). Please prepare the area!
-          </Text>
-          <Text style={styles.bookingId}>Booking #{displayId}</Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Format the time text, replacing raw SQL keys with suggested readable times
-  const displayTime = booking.time_slot?.startsWith("pending_") && booking.suggested_time
-    ? booking.suggested_time
-    : (booking.date ? `${booking.date} at ${booking.time_slot?.split("–")[0]?.trim()}` : "Anytime");
-
+// ── Notification Item ─────────────────────────────────────────────────────────
+function NotifItem({ item, onPress, onMarkRead }) {
+  const meta = getMeta(item.type);
   return (
-    <View style={[
-      styles.card,
-      isUnread && {
-        borderColor: COLORS.primary + "66",
-        backgroundColor: "rgba(108, 99, 255, 0.05)",
-      }
-    ]}>
-      {isUnread && <View style={styles.unreadMarker} />}
-
-      <View style={[styles.iconBox, { backgroundColor: meta.color + "18" }]}>
+    <TouchableOpacity
+      style={[ni.row, !item.is_read && ni.rowUnread]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <View style={[ni.iconWrap, { backgroundColor: meta.color + "18" }]}>
         <Ionicons name={meta.icon} size={20} color={meta.color} />
       </View>
-
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 3 }}>
-          <Text style={styles.title}>{meta.label}</Text>
-          {isUnread && (
-            <View style={styles.newBadge}>
-              <Text style={styles.newBadgeText}>NEW</Text>
-            </View>
-          )}
+      <View style={ni.body}>
+        <View style={ni.headerRow}>
+          <Text style={ni.title} numberOfLines={1}>{item.title}</Text>
+          <Text style={ni.time}>{timeAgo(item.created_at)}</Text>
         </View>
-        <Text style={styles.body} numberOfLines={2}>
-          {booking.service || "Service"} with {booking.provider_name || "Provider"} on {displayTime}
-        </Text>
-        <Text style={styles.bookingId}>Booking #{displayId}</Text>
+        <Text style={ni.bodyText} numberOfLines={2}>{item.body}</Text>
       </View>
-      <View style={[styles.statusDot, { backgroundColor: meta.color }]} />
-    </View>
+      {!item.is_read && (
+        <TouchableOpacity style={ni.dotBtn} onPress={onMarkRead} activeOpacity={0.8}>
+          <View style={[ni.dot, { backgroundColor: meta.color }]} />
+        </TouchableOpacity>
+      )}
+    </TouchableOpacity>
   );
 }
 
-export default function NotificationsScreen() {
-  const { userProfile } = useAuth();
-  const [bookings,     setBookings]     = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [refreshing,   setRefreshing]   = useState(false);
-  const [lastReadTime, setLastReadTime] = useState(0);
+// ── Main Screen ───────────────────────────────────────────────────────────────
+export default function NotificationsScreen({ navigation }) {
+  const { user, userProfile }                             = useAuth();
+  const { notifications, setNotifications, markRead, markAllRead, unreadCount } =
+    useNotificationStore();
+  const [loading,    setLoading]                          = useState(true);
+  const [refreshing, setRefreshing]                       = useState(false);
 
-  // Load last read timestamp from AsyncStorage
-  const loadLastReadTime = async () => {
+  const load = useCallback(async () => {
     try {
-      const saved = await AsyncStorage.getItem(LAST_READ_KEY);
-      if (saved) {
-        setLastReadTime(parseInt(saved, 10));
-      } else {
-        const defaultPast = Date.now() - 6 * 60 * 60 * 1000;
-        setLastReadTime(defaultPast);
-      }
-    } catch (_) {}
-  };
+      // Try v2 notifications
+      let v2Notifs = [];
+      try {
+        v2Notifs = await ChatAPI.listNotifications();
+      } catch (_) {}
 
-  const fetchData = useCallback(async () => {
-    try {
-      await loadLastReadTime();
-      const data = await API.getAllBookings(userProfile?.uid);
-      
-      const now = Date.now();
-      const injectedReminders = [];
-      
-      // Auto-scan confirmed bookings for 1-hour before notification reminders
-      data.forEach(b => {
-        if (b.status?.toUpperCase() === "CONFIRMED" || b.status?.toUpperCase() === "confirmed") {
-          const minutesLeft = getMinutesUntilBooking(b.date, b.time_slot);
-          
-          // Trigger if booking starts in less than 60 minutes
-          const isSoon = minutesLeft !== null && minutesLeft > 0 && minutesLeft <= 60;
-          
-          // Visual Demo Fallback: if booking is scheduled for Today or Tomorrow, also trigger reminder
-          const isDemoActive = b.date?.toLowerCase().includes("today") || b.date?.toLowerCase().includes("tomorrow");
-          
-          if (isSoon || isDemoActive) {
-            injectedReminders.push({
-              id: `reminder-${b.id || b.booking_id}`,
-              booking_id: b.booking_id || b.id,
-              service: b.service || b.service_category || "Service",
-              provider_name: b.provider_name || "Provider",
-              date: b.date,
-              time_slot: b.time_slot,
-              status: "REMINDER", // special status
-              created_at: new Date(now - 1000).toISOString(), // Set as fresh so it highlights as unread
-              location_address: b.location_address,
-              minutes_left: isSoon ? Math.round(minutesLeft) : 45
-            });
-          }
-        }
-      });
-      
-      // Sort: newest booking/reminder first
-      const sorted = [...injectedReminders, ...data].sort((a, b) => {
-        const dateA = new Date(a.created_at || a.date || 0);
-        const dateB = new Date(b.created_at || b.date || 0);
-        return dateB - dateA;
-      });
-      
-      setBookings(sorted);
-    } catch (_) {}
-    finally {
+      // Merge with v1 booking notifications
+      let v1Notifs = [];
+      try {
+        const bookings = await API.getAllBookings(userProfile?.uid || user?.uid);
+        v1Notifs = buildV1Notifications(bookings);
+      } catch (_) {}
+
+      // Deduplicate & merge by id
+      const seen  = new Set(v2Notifs.map((n) => n.id));
+      const all   = [...v2Notifs, ...v1Notifs.filter((n) => !seen.has(n.id))];
+      // Sort by time desc
+      all.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      setNotifications(all);
+    } catch (_) {
+    } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [userProfile]);
+  }, [user, userProfile]);
 
-  useEffect(() => {
-    fetchData();
-    
-    // Mark notifications as read after 3 seconds of viewing the screen
-    const timer = setTimeout(async () => {
-      try {
-        await AsyncStorage.setItem(LAST_READ_KEY, String(Date.now()));
-      } catch (_) {}
-    }, 3000);
+  useEffect(() => { load(); }, []);
 
-    return () => clearTimeout(timer);
-  }, [fetchData]);
+  const handleMarkAllRead = async () => {
+    markAllRead();
+    try { await ChatAPI.markAllNotificationsRead(); } catch (_) {}
+  };
+
+  const handleMarkOne = async (id) => {
+    markRead(id);
+    if (!id.startsWith("v1_")) {
+      try { await ChatAPI.markNotificationRead(id); } catch (_) {}
+    }
+  };
+
+  const handlePress = (item) => {
+    handleMarkOne(item.id);
+    if (item.type === "NEW_MESSAGE") {
+      navigation.navigate("ChatTab");
+    } else if (["BOOKING_CREATED","BOOKING_CONFIRMED","BOOKING_CANCELLED","PENDING","CONFIRMED","CANCELLED"].includes(item.type)) {
+      navigation.navigate("BookingsTab");
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Text style={styles.title2}>Notifications</Text>
-        <Text style={styles.subtitle}>{bookings.length} booking updates</Text>
+    <SafeAreaView style={s.safe} edges={["bottom"]}>
+      {/* Header */}
+      <View style={s.header}>
+        <Text style={s.title}>Notifications</Text>
+        {unreadCount > 0 && (
+          <TouchableOpacity style={s.markAllBtn} onPress={handleMarkAllRead} activeOpacity={0.75}>
+            <Text style={s.markAllText}>Mark all read</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {loading ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="small" color={COLORS.primary} />
+      {unreadCount > 0 && (
+        <View style={s.unreadRow}>
+          <Ionicons name="ellipse" size={8} color={COLORS.primary} />
+          <Text style={s.unreadText}>{unreadCount} unread</Text>
         </View>
-      ) : (
-        <FlatList
-          data={bookings}
-          keyExtractor={(item) => String(item.id || item.booking_id)}
-          renderItem={({ item }) => {
-            const itemTime = new Date(item.created_at || item.date).getTime();
-            const isUnread = itemTime > lastReadTime;
-            return <NotifCard booking={item} isUnread={isUnread} />;
-          }}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={() => { setRefreshing(true); fetchData(); }}
-              tintColor={COLORS.primary}
-            />
-          }
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="notifications-off-outline" size={52} color={COLORS.textMuted} />
-              <Text style={styles.emptyTitle}>No notifications yet</Text>
-              <Text style={styles.emptySub}>Your booking updates will appear here</Text>
-            </View>
-          }
-        />
       )}
+
+      <FlatList
+        data={notifications}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item }) => (
+          <NotifItem
+            item={item}
+            onPress={() => handlePress(item)}
+            onMarkRead={() => handleMarkOne(item.id)}
+          />
+        )}
+        contentContainerStyle={s.list}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { setRefreshing(true); load(); }}
+            tintColor={COLORS.primary}
+          />
+        }
+        ListEmptyComponent={
+          !loading && (
+            <View style={s.empty}>
+              <Ionicons name="notifications-off-outline" size={48} color={COLORS.textMuted} />
+              <Text style={s.emptyTitle}>No notifications yet</Text>
+              <Text style={s.emptySub}>Booking updates will appear here</Text>
+            </View>
+          )
+        }
+      />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: COLORS.bg },
-  header: { padding: 20, paddingBottom: 10 },
-  title2:   { fontSize: 26, ...FONTS.extraBold, color: COLORS.text, marginBottom: 3 },
-  subtitle: { fontSize: 13, color: COLORS.textSecondary },
-
-  list: { padding: 16, paddingBottom: 48 },
-
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.lg,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    position: "relative",
-    overflow: "hidden",
-  },
-  unreadMarker: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3.5,
-    backgroundColor: COLORS.primary,
-  },
-  newBadge: {
-    backgroundColor: COLORS.primaryGlow,
-    borderWidth: 1,
-    borderColor: COLORS.primary + "33",
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-  },
-  newBadgeText: {
-    fontSize: 8,
-    fontWeight: "900",
-    color: COLORS.primary,
-    letterSpacing: 0.5,
-  },
-  iconBox: {
-    width: 44, height: 44, borderRadius: 14,
-    alignItems: "center", justifyContent: "center",
-  },
-  title:     { fontSize: 13, ...FONTS.bold, color: COLORS.text },
-  body:      { fontSize: 12, color: COLORS.textSecondary, lineHeight: 18, marginBottom: 3 },
-  bookingId: { fontSize: 11, color: COLORS.textMuted },
-  statusDot: { width: 8, height: 8, borderRadius: 4, alignSelf: "flex-start", marginTop: 4 },
-
-  empty:      { alignItems: "center", paddingTop: 80, gap: 8 },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.bg },
+  header: { flexDirection: "row", alignItems: "center", padding: 20, paddingBottom: 8 },
+  title: { fontSize: 26, fontWeight: "900", color: COLORS.text, flex: 1, letterSpacing: -0.5 },
+  markAllBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: COLORS.primary + "44" },
+  markAllText: { fontSize: 12, color: COLORS.primary, fontWeight: "700" },
+  unreadRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 20, marginBottom: 6 },
+  unreadText: { fontSize: 12, color: COLORS.primary, fontWeight: "600" },
+  list: { padding: 8, paddingBottom: 40 },
+  empty: { alignItems: "center", paddingTop: 80, gap: 8 },
   emptyTitle: { fontSize: 18, ...FONTS.bold, color: COLORS.text },
-  emptySub:   { fontSize: 13, color: COLORS.textMuted },
+  emptySub: { fontSize: 13, color: COLORS.textMuted },
+});
+
+const ni = StyleSheet.create({
+  row: { flexDirection: "row", gap: 12, padding: 14, borderRadius: 14, marginVertical: 3, marginHorizontal: 8, backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.border },
+  rowUnread: { borderColor: COLORS.primary + "33", backgroundColor: COLORS.primary + "06" },
+  iconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  body: { flex: 1 },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  title: { fontSize: 13, fontWeight: "700", color: COLORS.text, flex: 1 },
+  time: { fontSize: 10, color: COLORS.textMuted },
+  bodyText: { fontSize: 12, color: COLORS.textSecondary, lineHeight: 17 },
+  dotBtn: { alignSelf: "center", padding: 4 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
 });

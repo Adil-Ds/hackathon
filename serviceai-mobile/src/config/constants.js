@@ -2,7 +2,8 @@ import { Platform } from "react-native";
 
 // Use localhost for web browser, LAN IP for physical mobile device (Expo Go).
 // Run `ipconfig` on Windows to find your LAN IP if it changes.
-const LAN_IP = "10.179.181.217";  // ✅ matches your current network
+// const LAN_IP = "10.179.181.217";  // ✅ matches your current network
+const LAN_IP = "192.168.100.78"; 
 
 // If router AP isolation blocks direct LAN connection:
 //   1. Run: ngrok http 8001
@@ -22,6 +23,8 @@ export const BASE_URL = RAILWAY_URL
     : Platform.OS === "web"
       ? "http://localhost:8001"
       : `http://${LAN_IP}:8001`;
+
+export const API_BASE_URL = BASE_URL;
 
 // Set to true during demos/judging to bypass the live backend and return mock data instantly.
 export const DEMO_MODE = false;

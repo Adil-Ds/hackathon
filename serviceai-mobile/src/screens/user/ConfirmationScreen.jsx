@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Animated,
   ActivityIndicator,
@@ -63,7 +63,7 @@ export default function ConfirmationScreen({ route, navigation }) {
   ];
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* Success hero */}

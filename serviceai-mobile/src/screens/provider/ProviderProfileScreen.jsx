@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
 } from "react-native";
@@ -33,7 +33,7 @@ export default function ProviderProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* Profile hero */}

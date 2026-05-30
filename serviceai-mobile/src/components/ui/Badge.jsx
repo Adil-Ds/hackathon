@@ -28,6 +28,9 @@ export function StatusBadge({ status }) {
     CONFIRMED: { label: "Confirmed", variant: "success", icon: "✓" },
     PENDING: { label: "Pending", variant: "warning", icon: "⏳" },
     CANCELLED: { label: "Cancelled", variant: "danger", icon: "✕" },
+    REJECTED: { label: "Rejected", variant: "danger", icon: "✕" },
+    IN_PROGRESS: { label: "In Progress", variant: "info", icon: "▶" },
+    COMPLETED: { label: "Completed", variant: "provider", icon: "★" },
   };
   const cfg = map[status] || { label: status, variant: "neutral", icon: null };
   return <Badge {...cfg} />;

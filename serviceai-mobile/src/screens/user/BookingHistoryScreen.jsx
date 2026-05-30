@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
+﻿import React, { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   View, Text, StyleSheet, FlatList, Modal, ScrollView,
   TouchableOpacity, RefreshControl, Alert, TextInput,
@@ -699,16 +699,20 @@ function BookingCard({ booking, onCancel, onRefresh }) {
 
 // ── Main Screen ────────────────────────────────────────────────────────────────
 const FILTERS = [
-  { key: "ALL",       label: "All" },
-  { key: "PENDING",   label: "Pending" },
-  { key: "CONFIRMED", label: "Confirmed" },
-  { key: "CANCELLED", label: "Cancelled" },
+  { key: "ALL",         label: "All" },
+  { key: "PENDING",     label: "Pending" },
+  { key: "CONFIRMED",   label: "Confirmed" },
+  { key: "IN_PROGRESS", label: "In Progress" },
+  { key: "COMPLETED",   label: "Completed" },
+  { key: "CANCELLED",   label: "Cancelled" },
 ];
 const FILTER_COLORS = {
-  ALL:       COLORS.primary,
-  PENDING:   COLORS.warning,
-  CONFIRMED: COLORS.success,
-  CANCELLED: COLORS.danger,
+  ALL:         COLORS.primary,
+  PENDING:     COLORS.warning,
+  CONFIRMED:   COLORS.success,
+  IN_PROGRESS: COLORS.info,
+  COMPLETED:   COLORS.provider || "#10B981",
+  CANCELLED:   COLORS.danger,
 };
 
 export default function BookingHistoryScreen() {
@@ -723,8 +727,9 @@ export default function BookingHistoryScreen() {
     try {
       const data = await API.getAllBookings(userProfile?.uid);
       setBookings(data);
-    } catch (_) {}
-    finally {
+    } catch (e) {
+      console.warn("[BookingHistory] fetch error:", e?.message);
+    } finally {
       setLoading(false);
       setRefreshing(false);
     }
@@ -759,8 +764,10 @@ export default function BookingHistoryScreen() {
     );
   };
 
-  const confirmed = bookings.filter((b) => b.status === "CONFIRMED").length;
-  const pending   = bookings.filter((b) => b.status === "PENDING").length;
+  const confirmed   = bookings.filter((b) => b.status === "CONFIRMED").length;
+  const pending     = bookings.filter((b) => b.status === "PENDING").length;
+  const inProgress  = bookings.filter((b) => b.status === "IN_PROGRESS").length;
+  const completed   = bookings.filter((b) => b.status === "COMPLETED").length;
 
   const displayed = filter === "ALL"
     ? bookings
@@ -773,7 +780,7 @@ export default function BookingHistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       {/* Ambient Radial Gradient background */}
       <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
         <LinearGradient
@@ -784,7 +791,11 @@ export default function BookingHistoryScreen() {
 
       <View style={styles.header}>
         <Text style={styles.title}>My Bookings</Text>
-        <Text style={styles.subtitle}>{bookings.length} total · {confirmed} confirmed · {pending} pending</Text>
+        <Text style={styles.subtitle}>
+          {bookings.length} total · {confirmed} confirmed · {pending} pending
+          {inProgress > 0 ? ` · ${inProgress} in progress` : ""}
+          {completed > 0 ? ` · ${completed} done` : ""}
+        </Text>
       </View>
 
       {/* Filter Tabs */}

@@ -30,7 +30,7 @@ function formatDateDMY(dateStr) {
 
 export default function BookingScreen({ route, navigation }) {
   const { provider: rankedProvider, intent } = route.params;
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const p = rankedProvider.provider;
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -150,7 +150,7 @@ export default function BookingScreen({ route, navigation }) {
         provider_id: p.id,
         provider_name: p.name,
         service_category: p.category,
-        user_id: userProfile?.id || "GUEST-" + Math.floor(Math.random() * 10000),
+        user_id: user?.uid || userProfile?.uid || "GUEST-" + Math.floor(Math.random() * 10000),
         user_name: userProfile?.name || "Guest User",
         user_location: p.area + ", " + p.city,
         location_address: finalLocation,
@@ -184,7 +184,7 @@ export default function BookingScreen({ route, navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 

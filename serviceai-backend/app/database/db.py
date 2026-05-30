@@ -75,6 +75,65 @@ def init_db():
         )
     """)
     conn.commit()
+
+    # ── Chat tables (v2 conversations — SQLite fallback) ──────────────────────
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS conversations (
+            id TEXT PRIMARY KEY,
+            booking_id TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            last_message_at TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS conversation_participants (
+            conversation_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            display_name TEXT DEFAULT '',
+            PRIMARY KEY (conversation_id, user_id)
+        )
+    """)
+    # Self-healing migration for existing databases
+    try:
+        conn.execute("ALTER TABLE conversation_participants ADD COLUMN display_name TEXT DEFAULT ''")
+    except Exception:
+        pass
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id TEXT PRIMARY KEY,
+            conversation_id TEXT NOT NULL,
+            sender_id TEXT NOT NULL,
+            encrypted_payload TEXT NOT NULL,
+            message_type TEXT DEFAULT 'text',
+            is_deleted INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS message_read_receipts (
+            message_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            PRIMARY KEY (message_id, user_id)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS conversation_unread (
+            conversation_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            unread_count INTEGER DEFAULT 0,
+            PRIMARY KEY (conversation_id, user_id)
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_users (
+            user_id TEXT PRIMARY KEY,
+            display_name TEXT NOT NULL DEFAULT '',
+            role TEXT DEFAULT 'user',
+            updated_at TEXT NOT NULL DEFAULT ''
+        )
+    """)
+    conn.commit()
     conn.close()
 
 
